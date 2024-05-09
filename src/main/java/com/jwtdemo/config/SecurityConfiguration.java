@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import java.util.Collections;
 
 import static com.jwtdemo.model.Role.ADMIN;
+import static com.jwtdemo.model.Role.USER;
 
 @Configuration
 @EnableWebSecurity
@@ -42,6 +43,7 @@ public class SecurityConfiguration{
                         req.requestMatchers("/v1/auth/*")
                                 .permitAll()
                                 .requestMatchers("/v1/admin").hasAnyRole(ADMIN.name())
+                                .requestMatchers("/v1/user").hasAnyRole(USER.name())
                                 .anyRequest()
                                 .authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
