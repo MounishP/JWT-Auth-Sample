@@ -3,12 +3,20 @@ package com.jwtdemo.auth;
 import com.jwtdemo.config.JwtService;
 import com.jwtdemo.model.User;
 import com.jwtdemo.repo.UserRepo;
+import com.jwtdemo.service.UserService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.io.UnsupportedEncodingException;
+import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.Random;
+import java.util.random.RandomGenerator;
 
 @Service
 @RequiredArgsConstructor
@@ -22,8 +30,14 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
 
+    private final UserService userService;
 
-    public AuthenticationResponse register(RegisterRequest registerRequest){
+
+
+    public AuthenticationResponse register(RegisterRequest registerRequest) throws MessagingException, UnsupportedEncodingException {
+        byte[] randomBytes = new byte[16];
+        new SecureRandom().nextBytes(randomBytes);
+        String randomCode = Base64.getEncoder().encodeToString(randomBytes);
         var user = User.builder()
                 .firstName(registerRequest.getFirstName())
                 .lastName(registerRequest.getLastName())
@@ -42,9 +56,13 @@ public class AuthService {
                 .experience(registerRequest.getExperience())
                 .languages(registerRequest.getLanguages())
                 .role(registerRequest.getRole())
+                .verificationCode(randomCode)
+                .isEnabled(false)
                 .build();
         userRepo.save(user);
         String jwtToken = jwtService.generateToken(user);
+        System.out.println(user.getVerificationCode());
+        userService.sendVerificationEmail(user);
         return AuthenticationResponse.builder().accessToken(jwtToken).build();
     }
 
